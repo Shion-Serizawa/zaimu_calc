@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Metrics Calculator</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <script type="module">
+        import init, { calculate_financial_metrics } from './index_computation_function/pkg/index_computation_function.js';
+
+        async function fetchAndCalculate() {
+            await init();
+
+            const codeDEI = document.getElementById('codeDEI').value;
+            const jsonData = await fetch('./output_new2.json');
+            const jsonObjects = await jsonData.json();
+            const data = jsonObjects.find(obj => obj.codeDEI === codeDEI);
+
+            const requiredKeys = [
+                "eps_year_1", "eps_year_2", "rd", "debt_tanki", "debt",
+                "total_liabilities", "capital_stack", "retained_earnings_year_1",
+                "retained_earnings_year_2", "treasury_stocks", "treasury_stock",
+                "shareholder_equity", "net_sales", "gross_profit", "sg_and_a",
+                "operating_income", "interest", "pre_tax_income", "taxes",
+                "net_income", "depreciation_and_amortization_ope_cf", "cash",
+                "increase_in_fixed_assets", "depreciation", "company_name", "codeDEI"
+            ];
+
+            if (!data || !(requiredKeys.every(key => data.hasOwnProperty(key)))) {
+                displayError("対応していない、または存在しないデータです。すみません。");
+                return;
+            }
+
+            const result = calculate_financial_metrics(data);
+            displayResult(result, data.company_name);
+        }
+        const thresholds = {
+            gross_margin: '>0.40',
+            sg_and_a_margin: '<0.30',
+            r_and_d_margin: '<0.30',
+            depreciation_margin: '<0.10',
+            interest_margin: '<0.15',
+            tax_margin: 'Corporate Tax Rate',
+            net_income_margin: '>0.20',
+            eps_growth: 'Positive & Growing',
+            cash_to_debt: 'Cash > Debt',
+            adjusted_debt_to_equity: 'Below 0.80',
+            retained_earnings_growth: 'Consistent Growth',
+            treasury_stock_exists: 'Exists',
+            capex_margin: '<0.25'
+        };
+
+        function isThresholdMet(key, value) {
+            switch (key) {
+                case 'gross_margin':
+                    return parseFloat(value) > 0.40;
+                case 'sg_and_a_margin':
+                    return parseFloat(value) < 0.30;
+                case 'r_and_d_margin':
+                    return parseFloat(value) < 0.30;
+                case 'depreciation_margin':
+                    return parseFloat(value) < 0.10;
+                case 'interest_margin':
+                    return parseFloat(value) < 0.15;
+                case 'net_income_margin':
+                    return parseFloat(value) > 0.20;
+                case 'eps_growth':
+                    return parseFloat(value) > 0.0;
+                case 'cash_to_debt':
+                    return value;
+                case 'adjusted_debt_to_equity':
+                    return parseFloat(value) < 0.8;
+                case 'treasury_stock_exists':
+                    return value;
+                case 'retained_earnings_growth':
+                    return parseFloat(value) > 0.25;
+
+                // 他の指標についても同様にロジックを実装
+                default:
+                    return false; // デフォルトではfalseを返す
+            }
+        }
+
+
+        function displayResult(result, companyName) {
+            let output = `<h2>企業名: ${companyName}</h2><table><tr><th>指標</th><th>計算結果</th><th>閾値</th></tr>`;
+
+            const metricTranslations = {
+                "gross_margin": "粗利益率（Gross Margin）",
+                "sg_and_a_margin": "販管費率（SG&A Margin）",
+                "r_and_d_margin": "研究開発費率（R&D Margin）",
+                "depreciation_margin": "減価償却率（Depreciation Margin）",
+                "interest_margin": "利子費用率（Interest Margin）",
+                "tax_margin": "税率（Tax Margin）",
+                "net_income_margin": "純利益率（Net Income Margin）",
+                "eps_growth": "EPS成長率（EPS Growth）",
+                "cash_to_debt": "現金対負債比率（Cash & Debt）",
+                "adjusted_debt_to_equity": "調整済み負債対株主資本比率（Adjusted Debt to Equity）",
+                "retained_earnings_growth": "留保利益成長率（Retained Earnings）",
+                "treasury_stock_exists": "自己株式保有状況（Treasury Stock）",
+                "capex_margin": "設備投資率（Capex Margin）",
+                // 他の指標も同様に追加
+            };
+
+            for (const [key, value] of Object.entries(result)) {
+                let japaneseMetricName = metricTranslations[key] || key.replace(/_/g, ' ');
+                let thresholdValue = thresholds[key] || 'N/A';
+                let thresholdClass = isThresholdMet(key, value) ? 'threshold-met' : '';
+                output += `<tr><td>${japaneseMetricName}</td><td>${value}</td><td class="${thresholdClass}">${thresholdValue}</td></tr>`;
+            }
+
+            output += '</table>';
+            document.getElementById('result').innerHTML = output;
+        }
+
+
+
+        function displayError(message) {
+            document.getElementById('result').innerHTML = `
+        <div style="color: white; background-color: red; padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <strong style="font-size: larger;">&#x26A0; </strong>
+            <span style="font-weight: bold;">${message}</span>
+        </div>
+    `;
+        }
+
+
+        window.fetchAndCalculate = fetchAndCalculate;
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #calculate {
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #companyName {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        #errorMessage {
+            color: red;
+        }
+
+        .threshold-met {
+            background-color: rgba(117, 235, 117, 0.573);
+            /* 達成した閾値のセルの背景色を緑色に設定 */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>東証コードに基づく財務指標計算</h1>
+    <input type="text" id="codeDEI" placeholder="東証コードを入力">
+    <button onclick="fetchAndCalculate()">計算する</button>
+    <div id="result"></div>
+    <h3>※現在、4553「東和薬品」で存在するXBRLタグを用いて作成したため、792社しか対応していません。<br>現在、対応中です。</h3>
+    <h3>※2023/11/10　までのデータです</h3>
+
+    <!-- 参考にしたサイトを表記 -->
+    <h4>Inspire By</h4>
+    <ul>
+        <li><a href="https://github.com/code4fukui/EDINET/" target="_blank">EDINET - code4fukui　(GitHub)</a></li>
+        <li><a href="https://twitter.com/RR_consultant/status/1720674736659931367"
+                target="_blank">ウォーレンバフェットの投資指標とされるもの　(Twitter)</a></li>
+    </ul>
+    <footer style="background-color: #f2f2f2; padding: 20px; text-align: center;">
+        <p>© 2023 by seri. All rights reserved.</p>
+        <p>Data：<a href="https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx" target="_blank">EDINET</a> | <a
+            href="https://www.houjin-bangou.nta.go.jp/" target="_blank">国税庁法人番号公表サイト</a></p>
+        <p><a href="https://github.com/Shion-Serizawa" target="_blank">My GitHub</a> | <a
+                href="https://github.com/ProjectGithubPage" target="_blank">Project GitHub Page（仮なので存在しない）</a></p>
+    </footer>
+
+</body>
+
+
+</html>
