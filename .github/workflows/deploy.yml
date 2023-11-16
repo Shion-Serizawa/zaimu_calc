@@ -35,5 +35,5 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "fast-parrot-59"
-          entrypoint: "index.js" # 📝 Update the entrypoint if necessary
+          entrypoint: "server.ts" # 📝 Update the entrypoint if necessary
           root: "." # 📝 Update the root if necessary
