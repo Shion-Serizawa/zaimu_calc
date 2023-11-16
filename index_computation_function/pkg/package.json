@@ -1,0 +1,14 @@
+{
+  "name": "index_computation_function",
+  "version": "0.1.0",
+  "files": [
+    "index_computation_function_bg.wasm",
+    "index_computation_function.js",
+    "index_computation_function.d.ts"
+  ],
+  "module": "index_computation_function.js",
+  "types": "index_computation_function.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
