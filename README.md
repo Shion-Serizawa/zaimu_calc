@@ -1,6 +1,6 @@
 # zaimu_calc
 
-- [GitHub Pages](https://shion-serizawa.github.io/zaimu_calc/)
+- [GitHub Pages（作成物のサイト）](https://shion-serizawa.github.io/zaimu_calc/)
 - どこかで見つけたウォーレンバフェットの投資基準+EDINET
 - 東証コードから計算するようなものを作成しました。
 ---
